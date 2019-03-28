@@ -1,0 +1,433 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+        <TITLE>Cálculo de estatística</TITLE>
+        <script type="text/javascript">
+            function calculate() {
+                var calcMode = document.getElementById("calc-mode").value;
+
+                if (calcMode == "rol") {
+                    getRolAnswers();
+                }
+                else if (calcMode == "table") {
+                    getTableAnswers()
+                }
+            }
+
+            function getAverageAnswer(rolList) {
+                let allRolAdded = rolList.reduce((a, b) => a + b)
+                return allRolAdded / rolList.length;
+            }
+
+            function getMedianAnswer(rolList) {
+                if (rolList.length % 2 != 0){
+                    let middlePosition = (rolList.length + 1) / 2;
+                    return rolList[middlePosition - 1];
+
+                }
+                
+                if (rolList.length % 2 == 0){
+                    let middlePositionLeft = rolList.length / 2;
+                    let middlePositionRight = (rolList.length / 2) + 1;
+
+                    let middleNumberLeft = rolList[middlePositionLeft - 1];
+                    let middleNumberRight = rolList[middlePositionRight - 1];
+                    return (middleNumberLeft + middleNumberRight) / 2;
+                }
+            }
+
+            function getModaAnswer(rolList) {
+                let valuesMapList = getAllValuesMapList(rolList);
+                        
+                let biggestRepeatedMap = getBiggestMap(valuesMapList);
+
+                let modaType = getModaType(biggestRepeatedMap);
+                
+                let answer = modaType;
+
+                if (biggestRepeatedMap.numbers.length == 1) {
+                    answer = "O número " + biggestRepeatedMap.numbers[0] + " apareceu " + biggestRepeatedMap.appearsQuantity + " vezes, por isso o tipo da moda é " + modaType;
+                } else if (biggestRepeatedMap.numbers.length > 1) {
+                    answer = "Os números: [" + biggestRepeatedMap.numbers.join(', ') + "] apareceram " + biggestRepeatedMap.appearsQuantity + " vezes, por isso o tipo da moda é " + modaType;
+                } 
+
+                return answer;
+            }
+
+            function getAllValuesMapList(rolList) {
+                let valuesMapList = [];
+
+                rolList.forEach(current => {
+                    let appearsQuantity = 0;
+                    let alreadyChecked = valuesMapList.filter((x) => x.number == current).length > 0;
+
+                    if (alreadyChecked) return
+
+                    rolList.forEach(next => { if (current == next) appearsQuantity++; });
+
+                    valuesMapList.push({ number: current, appearsQuantity: appearsQuantity });
+                });
+
+                return valuesMapList;
+            }
+
+            function getBiggestMap(valuesMapList) {
+                //Get only which appears more than 1 time
+                valuesMapList = valuesMapList.filter(valueMap => valueMap.appearsQuantity > 1);
+
+                let biggestAppearsQuantity = 1;
+
+                valuesMapList.forEach(repeatedValueMap => {
+                    biggestAppearsQuantity = repeatedValueMap.appearsQuantity > biggestAppearsQuantity ? repeatedValueMap.appearsQuantity : biggestAppearsQuantity;
+                });
+
+                let biggestValuesList = valuesMapList.filter(repeatedValueMap => repeatedValueMap.appearsQuantity == biggestAppearsQuantity).map(biggestValueMap => biggestValueMap.number)
+                return { numbers: biggestValuesList, appearsQuantity: biggestAppearsQuantity }
+            }
+
+            function getModaType(biggestRepeatedMap) {
+                if (biggestRepeatedMap.appearsQuantity == 1) {
+                    return "Amodal";
+                } 
+
+                if (biggestRepeatedMap.appearsQuantity == 2) {
+                    return "Unimodal";
+                } 
+                
+                if (biggestRepeatedMap.appearsQuantity > 2) {
+                    return "Multimodal";
+                }
+            }
+        
+            function showMessage(type, msg) {
+                let bootstrapAlert = $(".alert");
+                bootstrapAlert.removeClass("d-none");
+                bootstrapAlert.addClass("alert-" + type);
+                bootstrapAlert.find(".message").text(msg);
+            }
+
+            function hideMessage() {
+                let bootstrapAlert = $(".alert");
+                bootstrapAlert.addClass("d-none");
+                bootstrapAlert.find(".message").text("");
+            }
+
+            function onChangeCalcMode(element) {
+                switch (element.value) {
+                    case "rol":
+                        $("#calc-type").removeAttr("disabled");
+                        $("#new-line").attr("disabled", "disabled");
+                        $("#rol").removeAttr("disabled");
+                        $("#rol").attr("placeholder", "4,2,1,3,1");
+
+                        $("#frequency-table > tbody  > tr").each((index, tr) => {
+                            let numberOrFrequencyRef = $(tr).find("#number-frequency");
+                            let fiRef = $(tr).find("#fi");
+                            let xiRef = $(tr).find("#xi");
+                            let xiFiRef = $(tr).find("#xifi");
+                            let xRef = $(tr).find("#x");
+                            let mdRef = $(tr).find("#md");
+                            let moRef = $(tr).find("#mo");
+
+                            numberOrFrequencyRef.attr("disabled", "disabled");
+                            fiRef.attr("disabled", "disabled");
+
+                            numberOrFrequencyRef.attr("placeholder", "Resultado");
+                            fiRef.attr("placeholder", "Resultado");
+                            xiRef.attr("placeholder", "Resultado");
+                            xiFiRef.attr("placeholder", "Resultado");
+                            xRef.attr("placeholder", "Resultado");
+                            mdRef.attr("placeholder", "Resultado");
+                            moRef.attr("placeholder", "Resultado");
+
+                            numberOrFrequencyRef.val("");
+                            fiRef.val("");
+                            xiRef.val("");
+                            xiFiRef.val("");
+                            xRef.val("");
+                            mdRef.val("");
+                            moRef.val("");
+                        });
+                        break;
+                    case "table":
+                        $("#calc-type").val("all");
+                        $("#calc-type").attr("disabled", "disabled");
+                        $("#rol").attr("disabled", "disabled");
+                        $("#rol").attr("placeholder", "Resultado");
+                        $("#rol").val("");
+
+                        $("#new-line").removeAttr("disabled");
+
+                        $("#frequency-table > tbody  > tr").each((index, tr) => {
+                            let numberOrFrequencyRef = $(tr).find("#number-frequency");
+                            let fiRef = $(tr).find("#fi");
+                            let xiRef = $(tr).find("#xi");
+                            let xiFiRef = $(tr).find("#xifi");
+                            let xRef = $(tr).find("#x");
+                            let mdRef = $(tr).find("#md");
+                            let moRef = $(tr).find("#mo");
+
+                            numberOrFrequencyRef.removeAttr("disabled");
+                            fiRef.removeAttr("disabled");
+
+                            numberOrFrequencyRef.attr("placeholder", "120-140");
+                            fiRef.attr("placeholder", "7");
+                            xiRef.attr("placeholder", "Resultado");
+                            xiFiRef.attr("placeholder", "Resultado");
+                            xRef.attr("placeholder", "Resultado");
+                            mdRef.attr("placeholder", "Resultado");
+                            moRef.attr("placeholder", "Resultado");
+                        });
+                        break;
+                }
+            }
+
+            function insertNewRow(numberOrFrequency, fi, attr) {
+                let rowRef = $("#frequency-table tr:last")[0];
+                // let inputFrequencyRef = $(rowRef.cells[0]).children()[0];
+                // let inputFiRef = $(rowRef.cells[1]).children()[0];
+
+                // if (!inputFrequencyRef.value)
+                //     $(inputFrequencyRef)
+                    
+                var row = "<tr>" +
+                            "<th scope='row'><div><input type='text' " + attr + " onchange='validateTable()' value='" + numberOrFrequency + "' class='form-control form-control-lg' id='number-frequency' placeholder='120-140' required></div></th>" +
+                            "<td><div><input type='text' " + attr + " onchange='validateTable()' value='" + fi + "' class='form-control form-control-lg' id='fi' placeholder='7' required></div></td>" +
+                            "<td><input type='text' class='form-control form-control-lg' id='xi' placeholder='Resultado' disabled disabled></td>" +
+                            "<td><input type='text' class='form-control form-control-lg' id='xifi' placeholder='Resultado' disabled></td>" +
+                            "<td><input type='text' class='form-control form-control-lg' id='x' placeholder='Resultado' disabled></td>" +
+                            "<td><input type='text' class='form-control form-control-lg' id='md' placeholder='Resultado' disabled></td>" +
+                            "<td><input type='text' class='form-control form-control-lg' id='mo' placeholder='Resultado' disabled></td>" +
+                          "</tr>";
+
+                $("#frequency-table").append(row);
+            }
+        
+            function validateRolList() {
+                $("#container-rol").removeClass("was-validated");
+                let rolValue = document.getElementById("rol").value.replace(/ /g,'').trim()
+
+                if (rolValue) $("#container-rol").addClass("was-validated");
+
+                var cannotParseSomeNum = !rolValue.split(',').every(x => x.length > 0 && parseInt(x))
+
+                $("#rol")[0].setCustomValidity(cannotParseSomeNum ? "error" : "");
+
+                return !cannotParseSomeNum;
+            }
+
+            function validateTable() {
+                let hasInconsistencies = false;
+                
+                $("#frequency-table > tbody  > tr").each((index, tr) => {
+                    let numberOrFrequencyRef = $(tr).find("#number-frequency");
+                    let fiRef = $(tr).find("#fi");
+
+                    let numberOrFrequency = numberOrFrequencyRef.val();
+                    let fi = fiRef.val();
+
+                    let canParseNumberOrFrequency = numberOrFrequency.length > 0 && (parseInt(numberOrFrequency) || (parseInt(numberOrFrequency.split('-')[0] && parseInt(numberOrFrequency.split('-')[1]))))
+                    let canParseFi = fi.length > 0 && parseInt(fi);
+
+                    numberOrFrequencyRef.parent().removeClass("was-validated");
+                    fiRef.parent().removeClass("was-validated");
+
+                    if (numberOrFrequency) numberOrFrequencyRef.parent().addClass("was-validated");
+                    if (fi) fiRef.parent().addClass("was-validated");
+
+                    numberOrFrequencyRef[0].setCustomValidity(canParseNumberOrFrequency ? "" : "error");
+                    fiRef[0].setCustomValidity(canParseFi ? "" : "error");
+                    
+                    hasInconsistencies = !canParseNumberOrFrequency || !canParseFi;
+                });          
+                            
+                return !hasInconsistencies;
+            }
+        
+            function getTableAnswers() {
+                if (!validateTable()) return;
+
+                let fiTotalSum = getXi();
+
+                getXiFiAndX(fiTotalSum);
+            }
+
+            function getRolAnswers() {
+                if (!validateRolList()) return;
+
+                let calcType = document.getElementById("calc-type").value;
+                let result = document.getElementById("result");
+                let rol = document.getElementById("rol");
+                let rolList = rol.value.replace(/ /g,'').trim().split(',');
+
+                rolList = rolList.map(num => parseInt(num));
+                rolList = rolList.sort((a,b) => a > b ? 1 : a < b ? -1 : 0);
+
+                rol.value = rolList.join(", ");
+
+                switch(calcType) {
+                    case "all":
+                        result.value = "Média: " + getAverageAnswer(rolList) + "\nMediana: " + getMedianAnswer(rolList) + "\nModa: " + getModaAnswer(rolList);
+                        break;
+                    case "average":
+                        result.value = getAverageAnswer(rolList);
+                        break;
+                    case "median":
+                        result.value = getMedianAnswer(rolList);
+                        break;
+                    case "moda":
+                        result.value = getModaAnswer(rolList);
+                        break;
+                }
+                let valuesMapList = getAllValuesMapList(rolList)
+
+                populateTable(valuesMapList);
+
+                getTableAnswers();
+
+                result.style.height = 0;
+                result.style.height = result.scrollHeight + 'px';
+            }
+
+            function populateTable(valuesMapList) {
+                $("#frequency-table > tbody > tr").remove();
+
+                valuesMapList.forEach(repeatedValueMap => {
+                    insertNewRow(repeatedValueMap.number, repeatedValueMap.appearsQuantity, "disabled");
+                });
+            }
+
+            function getXi() {
+                let fiSum = 0;
+                let cannotParseSome = $("#frequency-table > tbody  > tr").each((index, tr) => {
+                    let fi = parseInt($(tr).find("#fi").val());
+                    fiSum = fi + fiSum;
+                    $(tr).find("#xi").val(fiSum)
+                });
+                return fiSum;
+            }
+
+            function getXiFiAndX(fiTotalSum) {
+                let rolList = [];
+                let xiFiSum = 0;
+                $("#frequency-table > tbody  > tr").each((index, tr) => {
+                    let numberOrFrequency = $(tr).find("#number-frequency").val();
+                    let fi = parseInt($(tr).find("#fi").val());
+                    let xiFi = Math.ceil((fi / fiTotalSum) * 100);
+                    xiFiSum = xiFi + xiFiSum;
+
+                    if(xiFiSum > 100) xiFiSum = 100;
+                    
+                    for(var i = 0; i < fi; i++) {
+                        rolList.push(parseInt(numberOrFrequency));
+                    }
+
+                    $(tr).find("#xifi").val(xiFi + "%");
+                    $(tr).find("#x").val(xiFiSum + "%");
+                });
+                rolList = rolList.sort((a,b) => a > b ? 1 : a < b ? -1 : 0);
+                document.getElementById("rol").value = rolList.join(',');
+
+                var result = document.getElementById("result");
+                result.value = "Média: " + getAverageAnswer(rolList) + "\nMediana: " + getMedianAnswer(rolList) + "\nModa: " + getModaAnswer(rolList);
+            }
+        </script>
+    </head>
+    <body>
+        <div style="width: 80%;" class="container-fluid p-4">
+            <div class="text-center m-5"><h1 class="display-1">Estatística</h1></div>
+            <div class="form-row">
+                <div class="col">
+                    <label for="calc-type">Tipo de cálculo</label>
+                    <select class="form-control form-control-lg" id="calc-type">
+                        <option value="all" selected>Todos cálculos</option>
+                        <option value="average">Média</option>
+                        <option value="median">Mediana</option>
+                        <option value="moda">Moda</option>
+                    </select>
+                </div>
+                <div class="col">
+                    <label for="calc-mode">Modo de cálculo</label>
+                    <select onchange="onChangeCalcMode(this)" class="form-control form-control-lg" id="calc-mode">
+                        <option value="rol" selected>Rol</option>
+                        <option value="table">Tabela</option>
+                    </select>
+                </div>
+            </div>
+            <hr class="mb-4" />
+            <div class="alert alert-dismissable d-none">
+                <button type="button" class="close" onclick="hideMessage()">&times;</button>
+                <span class="message"></span>
+            </div>
+            <div class="container-fluid">
+                <div class="form-group" id="container-rol">
+                    <label for="rol">
+                        Rol
+                    </label>
+                    <input type="text" onchange="validateRolList()" class="form-control form-control-lg" id="rol" placeholder="4,2,1,3,1" required>
+                    <div class="invalid-feedback">
+                        Os números não foram inseridos corretamente, tente novamente.
+                    </div>
+                    <small class="form-text text-muted">Informe a lista de números à ser usada no cálculo. Ex.: 41,43,25,43,59</small>
+                </div>
+                <div class="text-center"><h4>OU</h4></div>
+                <div class="form-group table-responsive-md pt-4" id="container-frequency">
+                    <table class="table table-hover" id="frequency-table">
+                        <caption>Tabela Auto-Complete</caption>
+                        <thead class="thead-dark">
+                          <tr>
+                            <th scope="col" style="width: 10%; min-width: 150px;" class="text-center">Nº ou Freq.</th>
+                            <th scope="col" style="width: 10%; min-width: 100px;" class="text-center">Fi</th>
+                            <th scope="col" class="text-center">Xi</th>
+                            <th scope="col" class="text-center">Xi.Fi</th>
+                            <th scope="col" class="text-center">X</th>
+                            <th scope="col" class="text-center">Md</th>
+                            <th scope="col" class="text-center">Mo</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <th scope="row"><div><input type="text" onchange="validateTable()" class="form-control form-control-lg" id="number-frequency" placeholder="Resultado" disabled required></div></th>
+                            <td><div><input type="text" onchange="validateTable()" class="form-control form-control-lg" id="fi" placeholder="Resultado" disabled required></div></td>
+                            <td><input type="text" class="form-control form-control-lg" id="xi" placeholder="Resultado" disabled></td>
+                            <td><input type="text" class="form-control form-control-lg" id="xifi" placeholder="Resultado" disabled></td>
+                            <td><input type="text" class="form-control form-control-lg" id="x" placeholder="Resultado" disabled></td>
+                            <td><input type="text" class="form-control form-control-lg" id="md" placeholder="Resultado" disabled></td>
+                            <td><input type="text" class="form-control form-control-lg" id="mo" placeholder="Resultado" disabled></td>
+                          </tr>
+                        </tbody>
+                    </table>
+                    <button id="new-line" type="button" style="display: inline-flex;" disabled onclick="insertNewRow('', '')" class="btn btn-dark m-1">
+                        <i class="material-icons">add</i>Nova linha
+                    </button>
+                </div>
+            </div>
+            <hr class="mt-4" />
+            <div class="form-group" id="container-result">
+                <label for="result">
+                    Resultado
+                </label>
+                <textarea style="overflow: hidden; resize: none;" class="form-control form-control-lg" id="result" placeholder="O resultado irá aparecer aqui..." disabled ></textarea>
+            </div>
+            <span style="text-align: center; display: block;">
+                <button type="button" style="display: inline-flex;" onclick="calculate()" class="btn btn-primary m-1">
+                    <i class="material-icons">done</i>Calcular
+                </button>
+                <a href="" style="display: inline-flex;" class="btn btn-primary m-1">
+                    <i class="material-icons">refresh</i>Refresh
+                </a>
+            </span>
+        </div>
+            <footer class="pt-4">
+                <div style="background-color: #f2f2f2" class="text-center py-3">© 2019 Copyright:
+                    <a href="https://github.com/marlonfauser/"> Marlon Fauser</a>
+                </div>
+            </footer>
+        </body>
+    </body>
+</HTML>
